@@ -52,7 +52,7 @@ main =
             bench "trivial(U)" $ whnfIO $
                 return (List.quicksort $ U.toList origU) >>= listToVec numElems,
             bench "c++_STL" $ whnfIO $
-                thaw origS >>= \sv -> CXX.quicksortStl sv 0 numElems
+                G.thaw origS >>= \sv -> CXX.quicksortStl sv 0 numElems
           ],
         bgroup "Vector (in-place)"
           [
