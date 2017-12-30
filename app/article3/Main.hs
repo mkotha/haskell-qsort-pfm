@@ -13,6 +13,7 @@ import qualified Data.Vector.Mutable as BV
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Vector.Storable as S
 import qualified Data.Vector.Fusion.Bundle as Bun
+import Data.IORef
 
 import qualified List
 import qualified List2
@@ -33,15 +34,16 @@ main =
         forM [0 .. numElems - 1] $ \i ->
           do
             MWC.uniform gen :: IO Word64
+    origRef <- newIORef orig
 
     -- Measurement
     defaultMain
       [
         bgroup "list"
           [
-            bench "trivial(U)" $ whnfIO (return (List.quicksort orig) >>= listToVec numElems),
-            bench "trivial(S)" $ whnfIO (return (List.quicksort orig) >>= listToVecS numElems),
-            bench "improved" $ whnfIO (return (List2.quicksort orig) >>= listToVec numElems)
+            bench "trivial(U)" $ whnfIO (readIORef origRef >>= listToVec numElems . List.quicksort),
+            bench "trivial(S)" $ whnfIO (readIORef origRef >>= listToVecS numElems . List.quicksort),
+            bench "improved" $ whnfIO (readIORef origRef >>= listToVec numElems . List2.quicksort)
           ],
         bgroup "vector"
           [
@@ -53,7 +55,7 @@ main =
           ],
         bgroup "library"
           [
-            bench "Data.List" $ whnfIO (return (DataList.sort orig) >>= listToVec numElems),
+            bench "Data.List" $ whnfIO (readIORef origRef >>= listToVec numElems . DataList.sort),
             bench "Vector.Argorithms" $ whnfIO (listToVec numElems orig >>= VectorArgorithms.sort),
             bench "c++_STL" $ whnfIO (listToVecS numElems orig >>= \sv -> CXX.quicksortStl sv 0 numElems)
           ]
